@@ -8,11 +8,12 @@ import org.jetbrains.exposed.sql.Database
 import org.testcontainers.containers.PostgreSQLContainer
 
 class ExposedUserRepositoryTest : DescribeSpec({
-    val postgres = PostgreSQLContainer("postgres:15-alpine").apply {
-        withDatabaseName("contract_test")
-        withUsername("testuser")
-        withPassword("testpass")
-    }
+    val postgres =
+        PostgreSQLContainer("postgres:15-alpine").apply {
+            withDatabaseName("contract_test")
+            withUsername("testuser")
+            withPassword("testpass")
+        }
 
     lateinit var repository: ExposedUserRepository
 
