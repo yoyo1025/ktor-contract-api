@@ -16,13 +16,20 @@ data class Contract(
 ) {
     init {
         require(title.isNotBlank()) { "title must not be blank" }
+        require(title.length <= MAX_TITLE_LENGTH) { "title must be at most $MAX_TITLE_LENGTH characters" }
         require(counterparty.isNotBlank()) { "counterparty must not be blank" }
+        require(counterparty.length <= MAX_COUNTERPARTY_LENGTH) {
+            "counterparty must be at most $MAX_COUNTERPARTY_LENGTH characters"
+        }
         if (endDate != null) {
             require(endDate.isAfter(startDate)) { "endDate must be after startDate" }
         }
     }
 
     companion object {
+        private const val MAX_TITLE_LENGTH = 255
+        private const val MAX_COUNTERPARTY_LENGTH = 255
+
         fun create(
             title: String,
             counterparty: String,

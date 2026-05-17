@@ -20,6 +20,30 @@ class UserTest : DescribeSpec({
             user.name shouldBe "Administrator"
         }
 
+        it("passwordHash が空文字の場合は例外") {
+            shouldThrow<IllegalArgumentException> {
+                User(
+                    id = UserId.generate(),
+                    loginId = "admin",
+                    passwordHash = "",
+                    name = "Administrator",
+                    createdAt = Instant.now(),
+                )
+            }.message shouldBe "passwordHash must not be blank"
+        }
+
+        it("passwordHash が空白のみの場合は例外") {
+            shouldThrow<IllegalArgumentException> {
+                User(
+                    id = UserId.generate(),
+                    loginId = "admin",
+                    passwordHash = "   ",
+                    name = "Administrator",
+                    createdAt = Instant.now(),
+                )
+            }.message shouldBe "passwordHash must not be blank"
+        }
+
         it("loginId が空文字の場合は例外") {
             shouldThrow<IllegalArgumentException> {
                 User(

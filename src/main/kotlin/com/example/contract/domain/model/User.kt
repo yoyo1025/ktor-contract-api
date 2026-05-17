@@ -10,6 +10,7 @@ data class User(
     val createdAt: Instant,
 ) {
     init {
+        require(passwordHash.isNotBlank()) { "passwordHash must not be blank" }
         require(loginId.isNotBlank()) { "loginId must not be blank" }
         require(loginId.length <= MAX_LOGIN_ID_LENGTH) { "loginId must be at most $MAX_LOGIN_ID_LENGTH characters" }
         require(name.isNotBlank()) { "name must not be blank" }

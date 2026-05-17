@@ -108,6 +108,36 @@ class ContractTest : DescribeSpec({
             }.message shouldBe "counterparty must not be blank"
         }
 
+        it("title が255文字を超える場合は例外") {
+            shouldThrow<IllegalArgumentException> {
+                Contract.create(
+                    title = "a".repeat(256),
+                    counterparty = "テスト社",
+                    startDate = LocalDate.of(2025, 4, 1),
+                    endDate = null,
+                    autoRenewal = false,
+                    status = ContractStatus.ACTIVE,
+                    now = now,
+                    today = today,
+                )
+            }.message shouldBe "title must be at most 255 characters"
+        }
+
+        it("counterparty が255文字を超える場合は例外") {
+            shouldThrow<IllegalArgumentException> {
+                Contract.create(
+                    title = "契約書",
+                    counterparty = "a".repeat(256),
+                    startDate = LocalDate.of(2025, 4, 1),
+                    endDate = null,
+                    autoRenewal = false,
+                    status = ContractStatus.ACTIVE,
+                    now = now,
+                    today = today,
+                )
+            }.message shouldBe "counterparty must be at most 255 characters"
+        }
+
         it("endDate が startDate より前の場合は例外") {
             shouldThrow<IllegalArgumentException> {
                 Contract.create(
