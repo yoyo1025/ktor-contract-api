@@ -8,19 +8,19 @@ import org.jetbrains.exposed.sql.selectAll
 import org.jetbrains.exposed.sql.transactions.transaction
 
 class ExposedUserRepository : UserRepository {
-
-    override fun findByLoginId(loginId: String): User? = transaction {
-        UsersTable.selectAll()
-            .where { UsersTable.loginId eq loginId }
-            .map { row ->
-                User(
-                    id = UserId(row[UsersTable.id]),
-                    loginId = row[UsersTable.loginId],
-                    passwordHash = row[UsersTable.passwordHash],
-                    name = row[UsersTable.name],
-                    createdAt = row[UsersTable.createdAt],
-                )
-            }
-            .singleOrNull()
-    }
+    override fun findByLoginId(loginId: String): User? =
+        transaction {
+            UsersTable.selectAll()
+                .where { UsersTable.loginId eq loginId }
+                .map { row ->
+                    User(
+                        id = UserId(row[UsersTable.id]),
+                        loginId = row[UsersTable.loginId],
+                        passwordHash = row[UsersTable.passwordHash],
+                        name = row[UsersTable.name],
+                        createdAt = row[UsersTable.createdAt],
+                    )
+                }
+                .singleOrNull()
+        }
 }

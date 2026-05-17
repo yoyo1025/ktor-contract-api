@@ -109,15 +109,36 @@ class ExposedContractRepositoryTest : DescribeSpec({
             results.any { it.id == contract.id } shouldBe true
         }
 
-        it("should support limit and offset") {
-            val contracts = (1..5).map {
-                createTestContract(title = "ページング契約$it", counterparty = "ページング社")
+        it("should support limit and offset with stable ordering") {
+            val baseTime = Instant.parse("2025-01-01T00:00:00Z")
+            val contracts = (1..5).map { i ->
+                Contract(
+                    id = ContractId.generate(),
+                    title = "順序テスト契約$i",
+                    counterparty = "順序テスト社",
+                    startDate = LocalDate.of(2025, 4, 1),
+                    endDate = LocalDate.of(2026, 3, 31),
+                    autoRenewal = true,
+                    status = ContractStatus.ACTIVE,
+                    createdAt = baseTime.plusSeconds(i.toLong()),
+                    updatedAt = baseTime.plusSeconds(i.toLong()),
+                )
             }
             contracts.forEach { repository.save(it) }
 
-            val page = repository.findAll(counterparty = "ページング社", limit = 2, offset = 0)
+            val page1 = repository.findAll(counterparty = "順序テスト社", limit = 2, offset = 0)
+            val page2 = repository.findAll(counterparty = "順序テスト社", limit = 2, offset = 2)
+            val page3 = repository.findAll(counterparty = "順序テスト社", limit = 2, offset = 4)
 
-            page shouldHaveSize 2
+            page1 shouldHaveSize 2
+            page2 shouldHaveSize 2
+            page3 shouldHaveSize 1
+
+            val allIds = (page1 + page2 + page3).map { it.id }
+            allIds.distinct() shouldHaveSize 5
+
+            page1[0].createdAt shouldBe baseTime.plusSeconds(5)
+            page1[1].createdAt shouldBe baseTime.plusSeconds(4)
         }
     }
 
