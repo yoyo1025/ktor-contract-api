@@ -1,6 +1,7 @@
 package com.example.contract.presentation
 
-import com.example.contract.module
+import com.example.contract.configureRouting
+import com.example.contract.configureSerialization
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
@@ -15,7 +16,10 @@ class HealthRouteTest : DescribeSpec({
     describe("GET /health") {
         it("200 OK と status=UP, database=UP を返す") {
             testApplication {
-                application { module() }
+                application {
+                    configureSerialization()
+                    configureRouting()
+                }
                 val response = client.get("/health")
                 response.status shouldBe HttpStatusCode.OK
                 val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject

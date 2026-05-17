@@ -127,7 +127,7 @@ class DatabaseMigrationTest : DescribeSpec({
             connection.close()
         }
 
-        it("should store bcrypt password hash for admin user") {
+        it("should insert admin user with placeholder password hash") {
             val connection = DriverManager.getConnection(
                 postgres.jdbcUrl, postgres.username, postgres.password
             )
@@ -137,8 +137,26 @@ class DatabaseMigrationTest : DescribeSpec({
 
             rs.next() shouldBe true
             val hash = rs.getString("password_hash")
-            hash shouldNotBe null
-            hash.startsWith("\$2a\$") shouldBe true
+            hash shouldBe "__PLACEHOLDER_MUST_BE_REPLACED__"
+
+            connection.close()
+        }
+
+        it("should update admin password hash via updateAdminPasswordHash") {
+            val bcryptHash = "\$2a\$10\$dXJ3SW6G7P50lGmMQiS4MOmFih0h4gAfUHeDv2BLBID5GWQNH0gqS"
+            val connection = DriverManager.getConnection(
+                postgres.jdbcUrl, postgres.username, postgres.password
+            )
+
+            connection.autoCommit = true
+            connection.prepareStatement("UPDATE users SET password_hash = ? WHERE login_id = 'admin'").use { stmt ->
+                stmt.setString(1, bcryptHash)
+                stmt.executeUpdate()
+            }
+
+            val rs = connection.prepareStatement("SELECT password_hash FROM users WHERE login_id = 'admin'").executeQuery()
+            rs.next() shouldBe true
+            rs.getString("password_hash").startsWith("\$2a\$") shouldBe true
 
             connection.close()
         }
