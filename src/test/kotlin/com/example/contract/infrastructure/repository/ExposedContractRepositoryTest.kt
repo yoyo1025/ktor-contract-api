@@ -14,11 +14,12 @@ import java.time.Instant
 import java.time.LocalDate
 
 class ExposedContractRepositoryTest : DescribeSpec({
-    val postgres = PostgreSQLContainer("postgres:15-alpine").apply {
-        withDatabaseName("contract_test")
-        withUsername("testuser")
-        withPassword("testpass")
-    }
+    val postgres =
+        PostgreSQLContainer("postgres:15-alpine").apply {
+            withDatabaseName("contract_test")
+            withUsername("testuser")
+            withPassword("testpass")
+        }
 
     lateinit var repository: ExposedContractRepository
 
@@ -111,19 +112,20 @@ class ExposedContractRepositoryTest : DescribeSpec({
 
         it("should support limit and offset with stable ordering") {
             val baseTime = Instant.parse("2025-01-01T00:00:00Z")
-            val contracts = (1..5).map { i ->
-                Contract(
-                    id = ContractId.generate(),
-                    title = "順序テスト契約$i",
-                    counterparty = "順序テスト社",
-                    startDate = LocalDate.of(2025, 4, 1),
-                    endDate = LocalDate.of(2026, 3, 31),
-                    autoRenewal = true,
-                    status = ContractStatus.ACTIVE,
-                    createdAt = baseTime.plusSeconds(i.toLong()),
-                    updatedAt = baseTime.plusSeconds(i.toLong()),
-                )
-            }
+            val contracts =
+                (1..5).map { i ->
+                    Contract(
+                        id = ContractId.generate(),
+                        title = "順序テスト契約$i",
+                        counterparty = "順序テスト社",
+                        startDate = LocalDate.of(2025, 4, 1),
+                        endDate = LocalDate.of(2026, 3, 31),
+                        autoRenewal = true,
+                        status = ContractStatus.ACTIVE,
+                        createdAt = baseTime.plusSeconds(i.toLong()),
+                        updatedAt = baseTime.plusSeconds(i.toLong()),
+                    )
+                }
             contracts.forEach { repository.save(it) }
 
             val page1 = repository.findAll(counterparty = "順序テスト社", limit = 2, offset = 0)

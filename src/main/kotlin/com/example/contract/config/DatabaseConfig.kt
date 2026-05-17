@@ -17,15 +17,16 @@ object DatabaseConfig {
     }
 
     fun createDataSource(): HikariDataSource {
-        val config = HikariConfig().apply {
-            jdbcUrl = buildJdbcUrl()
-            username = System.getenv("DB_USER") ?: "appuser"
-            password = System.getenv("DB_PASSWORD") ?: "apppassword"
-            driverClassName = "org.postgresql.Driver"
-            maximumPoolSize = 10
-            isAutoCommit = false
-            transactionIsolation = "TRANSACTION_REPEATABLE_READ"
-        }
+        val config =
+            HikariConfig().apply {
+                jdbcUrl = buildJdbcUrl()
+                username = System.getenv("DB_USER") ?: "appuser"
+                password = System.getenv("DB_PASSWORD") ?: "apppassword"
+                driverClassName = "org.postgresql.Driver"
+                maximumPoolSize = 10
+                isAutoCommit = false
+                transactionIsolation = "TRANSACTION_REPEATABLE_READ"
+            }
         return HikariDataSource(config)
     }
 
@@ -41,7 +42,7 @@ object DatabaseConfig {
         val hash = System.getenv("ADMIN_PASSWORD_HASH") ?: return
         dataSource.connection.use { conn: Connection ->
             conn.prepareStatement(
-                "UPDATE users SET password_hash = ? WHERE login_id = 'admin'"
+                "UPDATE users SET password_hash = ? WHERE login_id = 'admin'",
             ).use { stmt ->
                 stmt.setString(1, hash)
                 stmt.executeUpdate()
