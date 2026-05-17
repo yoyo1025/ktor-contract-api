@@ -3,6 +3,7 @@ plugins {
     kotlin("plugin.serialization") version "2.3.10"
     id("io.ktor.plugin") version "3.1.2"
     id("org.jlleitschuh.gradle.ktlint") version "12.1.2"
+    id("dev.detekt") version "2.0.0-alpha.3"
     application
 }
 
@@ -73,5 +74,10 @@ tasks.test {
     useJUnitPlatform()
 }
 
-// TODO: detekt は Kotlin 2.3 対応バージョンがリリースされたら導入する
-//       現時点では detekt 1.23.x が Kotlin 2.3 の解析に未対応
+detekt {
+    buildUponDefaultConfig = true
+    config.setFrom(files("config/detekt/detekt.yml"))
+    source.setFrom(files("src/main/kotlin", "src/test/kotlin"))
+    parallel = true
+    basePath = projectDir
+}

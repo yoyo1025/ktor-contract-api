@@ -4,12 +4,12 @@ config:
 complexity:
   active: true
   LongMethod:
-    threshold: 60
+    allowedLines: 60
   LongParameterList:
-    functionThreshold: 6
-    constructorThreshold: 8
+    allowedFunctionParameters: 6
+    allowedConstructorParameters: 8
   CyclomaticComplexMethod:
-    threshold: 15
+    allowedComplexity: 15
 
 coroutines:
   active: true
