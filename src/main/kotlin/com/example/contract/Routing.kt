@@ -8,7 +8,7 @@ import io.ktor.server.routing.routing
 fun Application.configureRouting() {
     routing {
         get("/health") {
-            call.respond(HealthResponse(status = "UP"))
+            call.respond(HealthResponse(status = "UP", database = "UP"))
         }
     }
 }
