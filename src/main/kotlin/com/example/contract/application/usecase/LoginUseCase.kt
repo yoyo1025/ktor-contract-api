@@ -22,16 +22,16 @@ class LoginUseCase(
         val user =
             userRepository.findByLoginId(command.loginId)
                 ?: run {
-                    logger.warn { "Login failed: user not found for loginId=${command.loginId}" }
+                    logger.warn { "Login failed" }
                     throw AuthenticationException("Invalid login credentials")
                 }
 
         if (!passwordVerifier.verify(command.password, user.passwordHash)) {
-            logger.warn { "Login failed: invalid password for loginId=${command.loginId}" }
+            logger.warn { "Login failed" }
             throw AuthenticationException("Invalid login credentials")
         }
 
-        logger.info { "Login successful: userId=${user.id.value}" }
+        logger.info { "Login successful" }
         return tokenGenerator.generate(user.id)
     }
 }
