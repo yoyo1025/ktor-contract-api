@@ -3,6 +3,8 @@ package com.example.contract
 import com.example.contract.application.usecase.ContractUseCase
 import com.example.contract.application.usecase.LoginUseCase
 import com.example.contract.config.DatabaseConfig
+import com.example.contract.config.JwtConfig
+import com.example.contract.config.configureSecurity
 import com.example.contract.config.koinGet
 import com.example.contract.config.setupKoin
 import com.example.contract.presentation.error.configureExceptionHandler
@@ -27,6 +29,8 @@ fun Application.module() {
     setupKoin()
     configureSerialization()
     configureExceptionHandler()
+    configureSecurity(koinGet<JwtConfig>())
+    configureRateLimit()
     configureRouting(
         loginUseCase = koinGet<LoginUseCase>(),
         contractUseCase = koinGet<ContractUseCase>(),

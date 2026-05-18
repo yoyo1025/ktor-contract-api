@@ -15,10 +15,11 @@ import org.koin.dsl.module
 
 val appModule =
     module {
+        single { JwtConfig.fromEnvironment() }
         single<ContractRepository> { ExposedContractRepository() }
         single<UserRepository> { ExposedUserRepository() }
         single<PasswordVerifier> { BcryptPasswordVerifier() }
-        single<TokenGenerator> { StubTokenGenerator() }
+        single<TokenGenerator> { JwtTokenGenerator(get()) }
         single { ContractUseCase(get()) }
         single { LoginUseCase(get(), get(), get()) }
     }
