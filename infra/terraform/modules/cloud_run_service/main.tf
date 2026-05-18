@@ -3,17 +3,14 @@ resource "google_cloud_run_v2_service" "this" {
   location = var.region
 
   template {
-    scaling {
-      min_instance_count = var.min_instances
-      max_instance_count = var.max_instances
-    }
-
     service_account = var.service_account_email
 
-    volumes {
-      name = "cloudsql"
-      cloud_sql_instance {
-        instances = [var.cloud_sql_connection_name]
+    vpc_access {
+      egress = "PRIVATE_RANGES_ONLY"
+
+      network_interfaces {
+        network    = "default"
+        subnetwork = "default"
       }
     }
 
@@ -25,8 +22,13 @@ resource "google_cloud_run_v2_service" "this" {
       }
 
       env {
+        name  = "APP_ENV"
+        value = "prod"
+      }
+
+      env {
         name  = "DB_HOST"
-        value = "/cloudsql/${var.cloud_sql_connection_name}"
+        value = var.db_host
       }
 
       env {
@@ -89,38 +91,24 @@ resource "google_cloud_run_v2_service" "this" {
         }
       }
 
-      env {
-        name  = "LOG_FORMAT"
-        value = "json"
-      }
-
-      volume_mounts {
-        name       = "cloudsql"
-        mount_path = "/cloudsql"
-      }
-
       resources {
         limits = {
           cpu    = "1000m"
           memory = "512Mi"
         }
+        cpu_idle          = true
+        startup_cpu_boost = true
       }
 
       startup_probe {
-        http_get {
-          path = "/health"
+        tcp_socket {
+          port = 8080
         }
-        initial_delay_seconds = 5
-        period_seconds        = 10
-        failure_threshold     = 3
+        failure_threshold     = 1
+        initial_delay_seconds = 0
+        period_seconds        = 240
+        timeout_seconds       = 240
       }
     }
   }
-}
-
-resource "google_cloud_run_v2_service_iam_member" "public" {
-  name     = google_cloud_run_v2_service.this.name
-  location = var.region
-  role     = "roles/run.invoker"
-  member   = "allUsers"
 }

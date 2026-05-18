@@ -39,7 +39,7 @@ resource "google_project_service" "apis" {
 # --------------------------------------------------
 resource "google_service_account" "cloud_run" {
   account_id   = "contract-api-runner"
-  display_name = "Cloud Run App Service Account"
+  display_name = "contract-api-runner"
 }
 
 resource "google_project_iam_member" "cloud_run_sql_client" {
@@ -121,12 +121,13 @@ module "artifact_registry" {
 module "cloud_sql" {
   source = "./modules/cloud_sql_postgres"
 
-  region        = var.region
-  instance_name = "contract-postgres"
-  tier          = var.db_tier
-  db_name       = var.db_name
-  db_user       = var.db_user
-  db_password   = data.google_secret_manager_secret_version.db_password.secret_data
+  region          = var.region
+  instance_name   = "contract-postgres"
+  tier            = var.db_tier
+  db_name         = var.db_name
+  db_user         = var.db_user
+  db_password     = data.google_secret_manager_secret_version.db_password.secret_data
+  private_network = "projects/${var.project_id}/global/networks/default"
 
   depends_on = [google_project_service.apis["sqladmin.googleapis.com"]]
 }
@@ -144,14 +145,12 @@ module "cloud_run" {
   service_name                  = "ktor-contract-api"
   image                         = var.cloud_run_image
   service_account_email         = google_service_account.cloud_run.email
-  cloud_sql_connection_name     = module.cloud_sql.instance_connection_name
+  db_host                       = var.db_host
   db_name                       = var.db_name
   db_user                       = var.db_user
   db_password_secret_id         = google_secret_manager_secret.db_password.secret_id
   jwt_secret_secret_id          = google_secret_manager_secret.jwt_secret.secret_id
   admin_password_hash_secret_id = google_secret_manager_secret.admin_password_hash.secret_id
-  min_instances                 = var.cloud_run_min_instances
-  max_instances                 = var.cloud_run_max_instances
 
   depends_on = [
     google_project_service.apis["run.googleapis.com"],

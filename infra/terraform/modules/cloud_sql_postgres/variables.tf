@@ -28,3 +28,8 @@ variable "db_password" {
   type        = string
   sensitive   = true
 }
+
+variable "private_network" {
+  description = "VPC network self_link for private IP"
+  type        = string
+}

@@ -18,8 +18,8 @@ variable "service_account_email" {
   type        = string
 }
 
-variable "cloud_sql_connection_name" {
-  description = "Cloud SQL instance connection name"
+variable "db_host" {
+  description = "Database host (private IP)"
   type        = string
 }
 
@@ -46,16 +46,4 @@ variable "jwt_secret_secret_id" {
 variable "admin_password_hash_secret_id" {
   description = "Secret Manager secret ID for admin password hash"
   type        = string
-}
-
-variable "min_instances" {
-  description = "Minimum number of instances"
-  type        = number
-  default     = 0
-}
-
-variable "max_instances" {
-  description = "Maximum number of instances"
-  type        = number
-  default     = 2
 }

@@ -12,7 +12,7 @@ variable "region" {
 variable "db_tier" {
   description = "Cloud SQL instance tier"
   type        = string
-  default     = "db-f1-micro"
+  default     = "db-perf-optimized-N-8"
 }
 
 variable "db_name" {
@@ -27,19 +27,12 @@ variable "db_user" {
   default     = "appuser"
 }
 
-variable "cloud_run_image" {
-  description = "Container image for Cloud Run (e.g. REGION-docker.pkg.dev/PROJECT/REPO/IMAGE:TAG)"
+variable "db_host" {
+  description = "Cloud SQL private IP address"
   type        = string
 }
 
-variable "cloud_run_min_instances" {
-  description = "Minimum number of Cloud Run instances"
-  type        = number
-  default     = 0
-}
-
-variable "cloud_run_max_instances" {
-  description = "Maximum number of Cloud Run instances"
-  type        = number
-  default     = 2
+variable "cloud_run_image" {
+  description = "Container image for Cloud Run (e.g. REGION-docker.pkg.dev/PROJECT/REPO/IMAGE:TAG)"
+  type        = string
 }
