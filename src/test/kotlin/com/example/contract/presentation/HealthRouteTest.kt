@@ -1,12 +1,13 @@
 package com.example.contract.presentation
 
-import com.example.contract.configureRouting
 import com.example.contract.configureSerialization
+import com.example.contract.presentation.routing.healthRoute
 import io.kotest.core.spec.style.DescribeSpec
 import io.kotest.matchers.shouldBe
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpStatusCode
+import io.ktor.server.routing.routing
 import io.ktor.server.testing.testApplication
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonObject
@@ -18,7 +19,7 @@ class HealthRouteTest : DescribeSpec({
             testApplication {
                 application {
                     configureSerialization()
-                    configureRouting()
+                    routing { healthRoute() }
                 }
                 val response = client.get("/health")
                 response.status shouldBe HttpStatusCode.OK
