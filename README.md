@@ -336,21 +336,246 @@ VALUES (
 
 ## 8. ローカル開発環境
 
-```
-docker-compose up -d   # PostgreSQL起動
-./gradlew run           # Ktorアプリ起動 (localhost:8080)
-```
+### 8.1 起動
+
+`.env` を用意する。既にローカル用の `.env` がある場合、この手順は不要。
 
 ```
-┌───────────────────┐
-│  Ktor App (:8080) │
-│  (ホスト直接実行)    │
-└───────┬───────────┘
-        │ TCP
-┌───────▼───────────┐
-│  PostgreSQL (:5432)│
-│  (Docker Compose)  │
-└───────────────────┘
+cp .env.example .env
+```
+
+`.env` の例:
+
+```env
+DB_NAME=contract_one
+DB_USER=appuser
+DB_PASSWORD=apppassword
+JWT_SECRET=local-dev-secret-key-change-in-production
+ADMIN_PASSWORD_HASH='$2b$10$8M1jASrqEwy7bIDXH0eBSOlgSGgZTi.M97sYNHLwbXMMXoV9mc.KW'
+```
+
+上記の `ADMIN_PASSWORD_HASH` に対応する初期ログイン情報:
+
+| 項目 | 値 |
+|---|---|
+| loginId | `admin` |
+| password | `admin123` |
+
+PostgreSQLとアプリケーションをまとめて起動する。
+
+```sh
+docker compose up --build
+```
+
+バックグラウンドで起動する場合:
+
+```sh
+docker compose up -d --build
+docker compose ps
+```
+
+想定結果:
+
+```text
+db-1   ...   healthy
+app-1  ...   running
+```
+
+アプリケーションは `http://localhost:8080` で待ち受ける。
+
+```
+┌──────────────────────┐
+│  Ktor App (:8080)    │
+│  (Docker Compose)    │
+└──────────┬───────────┘
+           │ TCP
+┌──────────▼───────────┐
+│  PostgreSQL (:5432)  │
+│  (Docker Compose)    │
+└──────────────────────┘
+```
+
+### 8.2 手動動作確認
+
+ヘルスチェック:
+
+```sh
+curl -i http://localhost:8080/health
+```
+
+想定結果:
+
+```http
+HTTP/1.1 200 OK
+
+{"status":"UP","database":"UP"}
+```
+
+ログイン:
+
+```sh
+curl -i -X POST http://localhost:8080/api/v1/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"loginId":"admin","password":"admin123"}'
+```
+
+想定結果:
+
+```http
+HTTP/1.1 200 OK
+
+{"accessToken":"eyJ...","tokenType":"Bearer","expiresIn":3600}
+```
+
+以降の確認で使うJWTを変数に入れる。
+
+```sh
+TOKEN=$(
+  curl -s -X POST http://localhost:8080/api/v1/auth/login \
+    -H 'Content-Type: application/json' \
+    -d '{"loginId":"admin","password":"admin123"}' |
+  python3 -c 'import json,sys; print(json.load(sys.stdin)["accessToken"])'
+)
+```
+
+認証なしで契約APIにアクセスすると失敗することを確認する。
+
+```sh
+curl -i http://localhost:8080/api/v1/contracts
+```
+
+想定結果:
+
+```http
+HTTP/1.1 401 Unauthorized
+
+{"error":{"code":"UNAUTHORIZED","message":"Token is invalid or expired"}}
+```
+
+契約を作成する。
+
+```sh
+CREATE_RESPONSE=$(
+  curl -s -X POST http://localhost:8080/api/v1/contracts \
+    -H "Authorization: Bearer $TOKEN" \
+    -H 'Content-Type: application/json' \
+    -d '{"title":"Test Contract","counterparty":"Sample Corp","startDate":"2026-06-01","endDate":"2027-05-31","autoRenewal":true,"status":"ACTIVE"}'
+)
+
+echo "$CREATE_RESPONSE"
+```
+
+想定結果:
+
+```json
+{
+  "id": "550e8400-e29b-41d4-a716-446655440000",
+  "title": "Test Contract",
+  "counterparty": "Sample Corp",
+  "startDate": "2026-06-01",
+  "endDate": "2027-05-31",
+  "autoRenewal": true,
+  "status": "ACTIVE",
+  "createdAt": "2026-05-18T00:00:00Z",
+  "updatedAt": "2026-05-18T00:00:00Z"
+}
+```
+
+`id`, `createdAt`, `updatedAt` は実行ごとに変わる。
+
+契約IDを変数に入れる。
+
+```sh
+CONTRACT_ID=$(printf '%s' "$CREATE_RESPONSE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["id"])')
+```
+
+契約一覧を取得する。
+
+```sh
+curl -i -H "Authorization: Bearer $TOKEN" \
+  'http://localhost:8080/api/v1/contracts?status=ACTIVE&limit=10&offset=0'
+```
+
+想定結果:
+
+```http
+HTTP/1.1 200 OK
+
+{"contracts":[{"id":"...","title":"Test Contract",...}],"total":1}
+```
+
+契約詳細を取得する。
+
+```sh
+curl -i -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/contracts/$CONTRACT_ID"
+```
+
+想定結果:
+
+```http
+HTTP/1.1 200 OK
+
+{"id":"...","title":"Test Contract","counterparty":"Sample Corp",...}
+```
+
+契約を更新する。
+
+```sh
+curl -i -X PATCH "http://localhost:8080/api/v1/contracts/$CONTRACT_ID" \
+  -H "Authorization: Bearer $TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"title":"Updated Contract"}'
+```
+
+想定結果:
+
+```http
+HTTP/1.1 200 OK
+
+{"id":"...","title":"Updated Contract",...}
+```
+
+契約を削除する。
+
+```sh
+curl -i -X DELETE "http://localhost:8080/api/v1/contracts/$CONTRACT_ID" \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+想定結果:
+
+```http
+HTTP/1.1 204 No Content
+```
+
+削除後に同じIDを取得すると `404 Not Found` になる。
+
+```sh
+curl -i -H "Authorization: Bearer $TOKEN" \
+  "http://localhost:8080/api/v1/contracts/$CONTRACT_ID"
+```
+
+想定結果:
+
+```http
+HTTP/1.1 404 Not Found
+
+{"error":{"code":"NOT_FOUND","message":"Contract not found"}}
+```
+
+### 8.3 停止
+
+コンテナを停止する。
+
+```sh
+docker compose down
+```
+
+DBデータも削除して初期状態からやり直す場合:
+
+```sh
+docker compose down -v
 ```
 
 ---
