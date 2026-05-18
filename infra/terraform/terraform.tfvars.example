@@ -1,6 +1,6 @@
 project_id      = "my-gcp-project"
 region          = "asia-northeast1"
 db_tier         = "db-f1-micro"
-db_name         = "contract_one"
+db_name         = "contract_system"
 db_user         = "appuser"
 cloud_run_image = "asia-northeast1-docker.pkg.dev/my-gcp-project/contract-api/ktor-contract-api:latest"

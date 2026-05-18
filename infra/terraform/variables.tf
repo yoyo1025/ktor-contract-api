@@ -18,7 +18,7 @@ variable "db_tier" {
 variable "db_name" {
   description = "Database name"
   type        = string
-  default     = "contract_one"
+  default     = "contract_system"
 }
 
 variable "db_user" {
