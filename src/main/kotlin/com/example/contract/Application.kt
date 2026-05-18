@@ -1,6 +1,11 @@
 package com.example.contract
 
+import com.example.contract.application.usecase.ContractUseCase
+import com.example.contract.application.usecase.LoginUseCase
 import com.example.contract.config.DatabaseConfig
+import com.example.contract.config.koinGet
+import com.example.contract.config.setupKoin
+import com.example.contract.presentation.error.configureExceptionHandler
 import com.zaxxer.hikari.HikariDataSource
 import io.ktor.server.application.Application
 import io.ktor.server.application.ApplicationStopped
@@ -19,7 +24,11 @@ fun Application.module() {
     monitor.subscribe(ApplicationStopped) {
         (dataSource as? HikariDataSource)?.close()
     }
+    setupKoin()
     configureSerialization()
-    configureRouting()
+    configureExceptionHandler()
+    configureRouting(
+        loginUseCase = koinGet<LoginUseCase>(),
+        contractUseCase = koinGet<ContractUseCase>(),
+    )
 }
-
