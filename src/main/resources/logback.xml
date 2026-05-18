@@ -1,9 +1,30 @@
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - %msg%n</pattern>
-        </encoder>
-    </appender>
+    <variable name="LOG_FORMAT" value="${LOG_FORMAT:-text}" />
+
+    <if condition='property("LOG_FORMAT").equals("json")'>
+        <then>
+            <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+                    <fieldNames>
+                        <timestamp>timestamp</timestamp>
+                        <version>[ignore]</version>
+                        <levelValue>[ignore]</levelValue>
+                    </fieldNames>
+                    <throwableConverter class="net.logstash.logback.stacktrace.ShortenedThrowableConverter">
+                        <maxDepthPerThrowable>20</maxDepthPerThrowable>
+                        <shortenedClassNameLength>36</shortenedClassNameLength>
+                    </throwableConverter>
+                </encoder>
+            </appender>
+        </then>
+        <else>
+            <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+                <encoder>
+                    <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [%X{requestId}] %X{method} %X{path} - %msg%n</pattern>
+                </encoder>
+            </appender>
+        </else>
+    </if>
 
     <root level="INFO">
         <appender-ref ref="STDOUT" />

@@ -4,8 +4,11 @@ import com.example.contract.domain.model.Contract
 import com.example.contract.domain.model.ContractId
 import com.example.contract.domain.model.ContractStatus
 import com.example.contract.domain.repository.ContractRepository
+import io.github.oshai.kotlinlogging.KotlinLogging
 import java.time.Instant
 import java.time.LocalDate
+
+private val logger = KotlinLogging.logger {}
 
 data class CreateContractCommand(
     val title: String,
@@ -50,7 +53,9 @@ class ContractUseCase(
                 autoRenewal = command.autoRenewal,
                 status = command.status,
             )
-        return contractRepository.save(contract)
+        val saved = contractRepository.save(contract)
+        logger.info { "Contract created: ${saved.id.value}" }
+        return saved
     }
 
     fun getById(id: ContractId): Contract {
@@ -104,13 +109,16 @@ class ContractUseCase(
                 status = resolvedStatus,
                 updatedAt = now,
             )
-        return contractRepository.update(updated)
+        val result = contractRepository.update(updated)
+        logger.info { "Contract updated: ${id.value}" }
+        return result
     }
 
     fun delete(id: ContractId) {
         contractRepository.findById(id)
             ?: throw ContractNotFoundException(id)
         contractRepository.deleteById(id)
+        logger.info { "Contract deleted: ${id.value}" }
     }
 }
 

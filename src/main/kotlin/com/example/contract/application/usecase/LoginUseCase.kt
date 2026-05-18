@@ -4,6 +4,9 @@ import com.example.contract.application.port.PasswordVerifier
 import com.example.contract.application.port.TokenGenerator
 import com.example.contract.application.port.TokenResult
 import com.example.contract.domain.repository.UserRepository
+import io.github.oshai.kotlinlogging.KotlinLogging
+
+private val logger = KotlinLogging.logger {}
 
 data class LoginCommand(
     val loginId: String,
@@ -18,12 +21,17 @@ class LoginUseCase(
     fun execute(command: LoginCommand): TokenResult {
         val user =
             userRepository.findByLoginId(command.loginId)
-                ?: throw AuthenticationException("Invalid login credentials")
+                ?: run {
+                    logger.warn { "Login failed" }
+                    throw AuthenticationException("Invalid login credentials")
+                }
 
         if (!passwordVerifier.verify(command.password, user.passwordHash)) {
+            logger.warn { "Login failed" }
             throw AuthenticationException("Invalid login credentials")
         }
 
+        logger.info { "Login successful" }
         return tokenGenerator.generate(user.id)
     }
 }
