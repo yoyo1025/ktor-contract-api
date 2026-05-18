@@ -31,9 +31,11 @@ object DatabaseConfig {
     }
 
     fun runMigrations(dataSource: DataSource) {
+        val fsPath = System.getenv("FLYWAY_FILESYSTEM_LOCATION")
+        val location = if (fsPath != null) "filesystem:$fsPath" else "classpath:db/migration"
         Flyway.configure()
             .dataSource(dataSource)
-            .locations("classpath:db/migration")
+            .locations(location)
             .load()
             .migrate()
     }
