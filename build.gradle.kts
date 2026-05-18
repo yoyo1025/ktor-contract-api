@@ -31,6 +31,7 @@ dependencies {
     implementation("io.ktor:ktor-server-auth-jwt")
     implementation("io.ktor:ktor-server-rate-limit")
     implementation("io.ktor:ktor-server-status-pages")
+    implementation("io.ktor:ktor-server-forwarded-header")
     implementation("io.ktor:ktor-serialization-kotlinx-json")
 
     // Database

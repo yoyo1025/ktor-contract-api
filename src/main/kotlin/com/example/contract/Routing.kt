@@ -6,6 +6,8 @@ import com.example.contract.presentation.routing.authRoutes
 import com.example.contract.presentation.routing.contractRoutes
 import com.example.contract.presentation.routing.healthRoute
 import io.ktor.server.application.Application
+import io.ktor.server.auth.authenticate
+import io.ktor.server.plugins.ratelimit.rateLimit
 import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 
@@ -16,8 +18,12 @@ fun Application.configureRouting(
     routing {
         healthRoute()
         route("/api/v1") {
-            authRoutes(loginUseCase)
-            contractRoutes(contractUseCase)
+            rateLimit(LOGIN_RATE_LIMIT) {
+                authRoutes(loginUseCase)
+            }
+            authenticate("auth-jwt") {
+                contractRoutes(contractUseCase)
+            }
         }
     }
 }
