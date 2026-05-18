@@ -11,7 +11,7 @@ import java.util.UUID
 class JwtTokenGeneratorTest : DescribeSpec({
     val jwtConfig =
         JwtConfig(
-            secret = "test-secret",
+            secret = "test-secret-key-for-testing-purposes",
             issuer = "test-issuer",
             audience = "test-audience",
             expiresInSeconds = 3600,
@@ -28,7 +28,7 @@ class JwtTokenGeneratorTest : DescribeSpec({
             result.accessToken shouldNotBe ""
 
             val verifier =
-                JWT.require(Algorithm.HMAC256("test-secret"))
+                JWT.require(Algorithm.HMAC256("test-secret-key-for-testing-purposes"))
                     .withIssuer("test-issuer")
                     .withAudience("test-audience")
                     .build()

@@ -18,6 +18,7 @@ import io.kotest.matchers.shouldBe
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.bearerAuth
 import io.ktor.client.request.get
+import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
@@ -36,7 +37,7 @@ import java.util.UUID
 
 private val testJwtConfig =
     JwtConfig(
-        secret = "test-secret-key-for-testing",
+        secret = "test-secret-key-for-testing-purposes-only",
         issuer = "test-issuer",
         audience = "test-audience",
         expiresInSeconds = 3600,
@@ -83,7 +84,7 @@ class SecurityTest : DescribeSpec({
         }
 
         it("不正な署名鍵のトークンで契約APIにアクセスすると401を返す") {
-            val wrongConfig = testJwtConfig.copy(secret = "wrong-secret")
+            val wrongConfig = testJwtConfig.copy(secret = "wrong-secret-key-that-is-long-enough")
             val wrongGenerator = JwtTokenGenerator(wrongConfig)
             val wrongToken = wrongGenerator.generate(userId).accessToken
 
@@ -140,6 +141,62 @@ class SecurityTest : DescribeSpec({
                 application { securityTestModule(loginUseCase, contractUseCase) }
                 val response = client.get("/health")
                 response.status shouldBe HttpStatusCode.OK
+            }
+        }
+    }
+
+    describe("Rate Limit") {
+        it("同一IPから61回目のログインリクエストで429を返す") {
+            every { loginUseCase.execute(any()) } returns
+                TokenResult(accessToken = "token", tokenType = "Bearer", expiresIn = 3600)
+
+            testApplication {
+                application { securityTestModule(loginUseCase, contractUseCase) }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                repeat(60) {
+                    val response =
+                        client.post("/api/v1/auth/login") {
+                            contentType(ContentType.Application.Json)
+                            setBody("""{"loginId":"admin","password":"pass"}""")
+                            header("X-Forwarded-For", "192.168.1.100")
+                        }
+                    response.status shouldBe HttpStatusCode.OK
+                }
+
+                val response =
+                    client.post("/api/v1/auth/login") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"loginId":"admin","password":"pass"}""")
+                        header("X-Forwarded-For", "192.168.1.100")
+                    }
+                response.status shouldBe HttpStatusCode.TooManyRequests
+            }
+        }
+
+        it("異なるIPからのリクエストは別のRate Limitバケットを使用する") {
+            every { loginUseCase.execute(any()) } returns
+                TokenResult(accessToken = "token", tokenType = "Bearer", expiresIn = 3600)
+
+            testApplication {
+                application { securityTestModule(loginUseCase, contractUseCase) }
+                val client = createClient { install(ContentNegotiation) { json() } }
+
+                repeat(60) {
+                    client.post("/api/v1/auth/login") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"loginId":"admin","password":"pass"}""")
+                        header("X-Forwarded-For", "10.0.0.1")
+                    }
+                }
+
+                val responseFromDifferentIp =
+                    client.post("/api/v1/auth/login") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"loginId":"admin","password":"pass"}""")
+                        header("X-Forwarded-For", "10.0.0.2")
+                    }
+                responseFromDifferentIp.status shouldBe HttpStatusCode.OK
             }
         }
     }
