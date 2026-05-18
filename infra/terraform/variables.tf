@@ -36,3 +36,13 @@ variable "cloud_run_image" {
   description = "Container image for Cloud Run (e.g. REGION-docker.pkg.dev/PROJECT/REPO/IMAGE:TAG)"
   type        = string
 }
+
+variable "github_repository_owner" {
+  description = "GitHub repository owner (e.g. my-org)"
+  type        = string
+}
+
+variable "github_repository" {
+  description = "GitHub repository (e.g. my-org/my-repo)"
+  type        = string
+}
