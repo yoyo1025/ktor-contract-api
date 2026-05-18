@@ -1,14 +1,23 @@
 package com.example.contract
 
+import com.example.contract.application.usecase.ContractUseCase
+import com.example.contract.application.usecase.LoginUseCase
+import com.example.contract.presentation.routing.authRoutes
+import com.example.contract.presentation.routing.contractRoutes
+import com.example.contract.presentation.routing.healthRoute
 import io.ktor.server.application.Application
-import io.ktor.server.response.respond
-import io.ktor.server.routing.get
+import io.ktor.server.routing.route
 import io.ktor.server.routing.routing
 
-fun Application.configureRouting() {
+fun Application.configureRouting(
+    loginUseCase: LoginUseCase,
+    contractUseCase: ContractUseCase,
+) {
     routing {
-        get("/health") {
-            call.respond(HealthResponse(status = "UP", database = "UP"))
+        healthRoute()
+        route("/api/v1") {
+            authRoutes(loginUseCase)
+            contractRoutes(contractUseCase)
         }
     }
 }
