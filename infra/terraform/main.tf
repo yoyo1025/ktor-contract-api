@@ -9,8 +9,7 @@ terraform {
   }
 
   backend "gcs" {
-    # bucket is configured via -backend-config or environment variable
-    # e.g. terraform init -backend-config="bucket=my-tfstate-bucket"
+    bucket = "contract-system-496712-tfstate"
     prefix = "terraform/state"
   }
 }
@@ -39,7 +38,7 @@ resource "google_project_service" "apis" {
 # Service Account for Cloud Run
 # --------------------------------------------------
 resource "google_service_account" "cloud_run" {
-  account_id   = "cloud-run-app"
+  account_id   = "contract-api-runner"
   display_name = "Cloud Run App Service Account"
 }
 
@@ -59,7 +58,7 @@ resource "google_project_iam_member" "cloud_run_log_writer" {
 # Secret Manager
 # --------------------------------------------------
 resource "google_secret_manager_secret" "db_password" {
-  secret_id = "db-password"
+  secret_id = "contract-db-password"
 
   replication {
     auto {}
@@ -69,7 +68,7 @@ resource "google_secret_manager_secret" "db_password" {
 }
 
 resource "google_secret_manager_secret" "jwt_secret" {
-  secret_id = "jwt-secret"
+  secret_id = "contract-jwt-secret"
 
   replication {
     auto {}
@@ -79,7 +78,7 @@ resource "google_secret_manager_secret" "jwt_secret" {
 }
 
 resource "google_secret_manager_secret" "admin_password_hash" {
-  secret_id = "admin-password-hash"
+  secret_id = "contract-admin-password-hash"
 
   replication {
     auto {}
@@ -114,7 +113,7 @@ module "artifact_registry" {
   source = "./modules/artifact_registry"
 
   region        = var.region
-  repository_id = "ktor-contract-api"
+  repository_id = "contract-api"
 
   depends_on = [google_project_service.apis["artifactregistry.googleapis.com"]]
 }
@@ -123,7 +122,7 @@ module "cloud_sql" {
   source = "./modules/cloud_sql_postgres"
 
   region        = var.region
-  instance_name = "ktor-contract-db"
+  instance_name = "contract-postgres"
   tier          = var.db_tier
   db_name       = var.db_name
   db_user       = var.db_user
