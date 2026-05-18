@@ -9,71 +9,51 @@ import com.example.contract.presentation.dto.InvalidRequestException
 import io.ktor.http.HttpStatusCode
 import io.ktor.server.application.Application
 import io.ktor.server.application.install
+import io.ktor.server.plugins.BadRequestException
 import io.ktor.server.plugins.statuspages.StatusPages
+import io.ktor.server.request.ContentTransformationException
 import io.ktor.server.response.respond
 
 fun Application.configureExceptionHandler() {
     install(StatusPages) {
         exception<InvalidRequestException> { call, cause ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                ErrorResponse(
-                    error =
-                        ErrorBody(
-                            code = "VALIDATION_ERROR",
-                            message = "${cause.field} ${cause.reason}",
-                            details = listOf(ErrorDetail(field = cause.field, reason = cause.reason)),
-                        ),
-                ),
-            )
+            call.respond(HttpStatusCode.BadRequest, validationError(cause.field, cause.reason))
         }
         exception<IllegalArgumentException> { call, cause ->
-            call.respond(
-                HttpStatusCode.BadRequest,
-                ErrorResponse(
-                    error =
-                        ErrorBody(
-                            code = "VALIDATION_ERROR",
-                            message = cause.message ?: "Invalid request",
-                        ),
-                ),
-            )
+            call.respond(HttpStatusCode.BadRequest, simpleError("VALIDATION_ERROR", cause.message ?: "Invalid request"))
+        }
+        exception<BadRequestException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, simpleError("VALIDATION_ERROR", cause.message ?: "Bad request"))
+        }
+        exception<ContentTransformationException> { call, cause ->
+            call.respond(HttpStatusCode.BadRequest, simpleError("VALIDATION_ERROR", cause.message ?: "Invalid request body"))
         }
         exception<AuthenticationException> { call, cause ->
-            call.respond(
-                HttpStatusCode.Unauthorized,
-                ErrorResponse(
-                    error =
-                        ErrorBody(
-                            code = "UNAUTHORIZED",
-                            message = cause.message ?: "Authentication failed",
-                        ),
-                ),
-            )
+            call.respond(HttpStatusCode.Unauthorized, simpleError("UNAUTHORIZED", cause.message ?: "Authentication failed"))
         }
         exception<ContractNotFoundException> { call, _ ->
-            call.respond(
-                HttpStatusCode.NotFound,
-                ErrorResponse(
-                    error =
-                        ErrorBody(
-                            code = "NOT_FOUND",
-                            message = "Contract not found",
-                        ),
-                ),
-            )
+            call.respond(HttpStatusCode.NotFound, simpleError("NOT_FOUND", "Contract not found"))
         }
         exception<Exception> { call, _ ->
-            call.respond(
-                HttpStatusCode.InternalServerError,
-                ErrorResponse(
-                    error =
-                        ErrorBody(
-                            code = "INTERNAL_ERROR",
-                            message = "An unexpected error occurred",
-                        ),
-                ),
-            )
+            call.respond(HttpStatusCode.InternalServerError, simpleError("INTERNAL_ERROR", "An unexpected error occurred"))
         }
     }
 }
+
+private fun validationError(
+    field: String,
+    reason: String,
+): ErrorResponse =
+    ErrorResponse(
+        error =
+            ErrorBody(
+                code = "VALIDATION_ERROR",
+                message = "$field $reason",
+                details = listOf(ErrorDetail(field = field, reason = reason)),
+            ),
+    )
+
+private fun simpleError(
+    code: String,
+    message: String,
+): ErrorResponse = ErrorResponse(error = ErrorBody(code = code, message = message))

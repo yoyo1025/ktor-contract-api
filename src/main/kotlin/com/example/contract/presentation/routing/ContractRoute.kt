@@ -26,73 +26,77 @@ import java.time.format.DateTimeParseException
 
 fun Route.contractRoutes(contractUseCase: ContractUseCase) {
     route("/contracts") {
-        get {
-            val status = call.request.queryParameters["status"]?.let { parseStatus(it) }
-            val counterparty = call.request.queryParameters["counterparty"]
-            val limit =
-                call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 100) ?: 50
-            val offset =
-                call.request.queryParameters["offset"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+        listContracts(contractUseCase)
+        createContract(contractUseCase)
+        getContract(contractUseCase)
+        updateContract(contractUseCase)
+        deleteContract(contractUseCase)
+    }
+}
 
-            val result =
-                contractUseCase.list(
-                    ContractListQuery(
-                        status = status,
-                        counterparty = counterparty,
-                        limit = limit,
-                        offset = offset,
-                    ),
-                )
-            call.respond(
-                ContractListResponse(
-                    contracts = result.contracts.map { it.toResponse() },
-                    total = result.total,
-                ),
+private fun Route.listContracts(contractUseCase: ContractUseCase) {
+    get {
+        val status = call.request.queryParameters["status"]?.let { parseStatus(it) }
+        val counterparty = call.request.queryParameters["counterparty"]
+        val limit = call.request.queryParameters["limit"]?.toIntOrNull()?.coerceIn(1, 100) ?: 50
+        val offset = call.request.queryParameters["offset"]?.toIntOrNull()?.coerceAtLeast(0) ?: 0
+
+        val result =
+            contractUseCase.list(
+                ContractListQuery(status = status, counterparty = counterparty, limit = limit, offset = offset),
             )
-        }
+        call.respond(ContractListResponse(contracts = result.contracts.map { it.toResponse() }, total = result.total))
+    }
+}
 
-        post {
-            val request = call.receive<CreateContractRequest>()
-            val command =
-                CreateContractCommand(
-                    title = request.title,
-                    counterparty = request.counterparty,
-                    startDate = parseDate(request.startDate, "startDate"),
-                    endDate = request.endDate?.let { parseDate(it, "endDate") },
-                    autoRenewal = request.autoRenewal,
-                    status = request.status.toContractStatus(),
-                )
-            val contract = contractUseCase.create(command)
-            call.respond(HttpStatusCode.Created, contract.toResponse())
-        }
+private fun Route.createContract(contractUseCase: ContractUseCase) {
+    post {
+        val request = call.receive<CreateContractRequest>()
+        val command =
+            CreateContractCommand(
+                title = request.title,
+                counterparty = request.counterparty,
+                startDate = parseDate(request.startDate, "startDate"),
+                endDate = request.endDate?.let { parseDate(it, "endDate") },
+                autoRenewal = request.autoRenewal,
+                status = request.status.toContractStatus(),
+            )
+        val contract = contractUseCase.create(command)
+        call.respond(HttpStatusCode.Created, contract.toResponse())
+    }
+}
 
-        get("/{id}") {
-            val id = parseContractId(call.parameters["id"]!!)
-            val contract = contractUseCase.getById(id)
-            call.respond(contract.toResponse())
-        }
+private fun Route.getContract(contractUseCase: ContractUseCase) {
+    get("/{id}") {
+        val id = parseContractId(call.parameters["id"]!!)
+        val contract = contractUseCase.getById(id)
+        call.respond(contract.toResponse())
+    }
+}
 
-        patch("/{id}") {
-            val id = parseContractId(call.parameters["id"]!!)
-            val request = call.receive<UpdateContractRequest>()
-            val command =
-                UpdateContractCommand(
-                    title = request.title,
-                    counterparty = request.counterparty,
-                    startDate = request.startDate?.let { parseDate(it, "startDate") },
-                    endDate = request.endDate?.let { parseDate(it, "endDate") },
-                    autoRenewal = request.autoRenewal,
-                    status = request.status?.toContractStatus(),
-                )
-            val contract = contractUseCase.update(id, command)
-            call.respond(contract.toResponse())
-        }
+private fun Route.updateContract(contractUseCase: ContractUseCase) {
+    patch("/{id}") {
+        val id = parseContractId(call.parameters["id"]!!)
+        val request = call.receive<UpdateContractRequest>()
+        val command =
+            UpdateContractCommand(
+                title = request.title,
+                counterparty = request.counterparty,
+                startDate = request.startDate?.let { parseDate(it, "startDate") },
+                endDate = request.endDate?.let { parseDate(it, "endDate") },
+                autoRenewal = request.autoRenewal,
+                status = request.status?.toContractStatus(),
+            )
+        val contract = contractUseCase.update(id, command)
+        call.respond(contract.toResponse())
+    }
+}
 
-        delete("/{id}") {
-            val id = parseContractId(call.parameters["id"]!!)
-            contractUseCase.delete(id)
-            call.respond(HttpStatusCode.NoContent)
-        }
+private fun Route.deleteContract(contractUseCase: ContractUseCase) {
+    delete("/{id}") {
+        val id = parseContractId(call.parameters["id"]!!)
+        contractUseCase.delete(id)
+        call.respond(HttpStatusCode.NoContent)
     }
 }
 
