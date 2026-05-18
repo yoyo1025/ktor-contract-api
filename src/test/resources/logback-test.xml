@@ -1,0 +1,17 @@
+<configuration>
+    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] %-5level %logger{36} - [%X{requestId}] %X{method} %X{path} - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <root level="INFO">
+        <appender-ref ref="STDOUT" />
+    </root>
+
+    <logger name="io.ktor" level="WARN" />
+    <logger name="org.eclipse.jetty" level="WARN" />
+    <logger name="org.flywaydb" level="WARN" />
+    <logger name="Exposed" level="WARN" />
+    <logger name="io.mockk" level="WARN" />
+</configuration>

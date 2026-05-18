@@ -54,6 +54,7 @@ dependencies {
     implementation("ch.qos.logback:logback-classic:1.5.13")
     implementation("net.logstash.logback:logstash-logback-encoder:8.0")
     implementation("io.github.oshai:kotlin-logging-jvm:7.0.3")
+    implementation("org.codehaus.janino:janino:3.1.12")
 
     // Test
     testImplementation(kotlin("test"))
