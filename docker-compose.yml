@@ -2,15 +2,15 @@ services:
   db:
     image: postgres:15
     environment:
-      POSTGRES_DB: contract_one
-      POSTGRES_USER: appuser
-      POSTGRES_PASSWORD: apppassword
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U appuser -d contract_one"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
       interval: 5s
       timeout: 3s
       retries: 5
@@ -22,14 +22,15 @@ services:
     environment:
       DB_HOST: db
       DB_PORT: "5432"
-      DB_NAME: contract_one
-      DB_USER: appuser
-      DB_PASSWORD: apppassword
-      JWT_SECRET: local-dev-secret-key-change-in-production
+      DB_NAME: ${DB_NAME}
+      DB_USER: ${DB_USER}
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
       JWT_ISSUER: ktor-contract-api
       JWT_AUDIENCE: ktor-contract-api
       JWT_EXPIRES_IN_SECONDS: "3600"
-      ADMIN_PASSWORD_HASH: "$$2b$$10$$8M1jASrqEwy7bIDXH0eBSOlgSGgZTi.M97sYNHLwbXMMXoV9mc.KW"
+      ADMIN_PASSWORD_HASH: ${ADMIN_PASSWORD_HASH}
+      FLYWAY_FILESYSTEM_LOCATION: /app/db/migration
       LOG_FORMAT: json
     depends_on:
       db:
