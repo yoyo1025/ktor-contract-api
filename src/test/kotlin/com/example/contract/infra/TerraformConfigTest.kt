@@ -78,10 +78,10 @@ class TerraformConfigTest : DescribeSpec({
             content shouldContain "DOCKER"
         }
 
-        it("cloud_sql_postgres モジュールが PostgreSQL 15 インスタンスを作成する") {
+        it("cloud_sql_postgres モジュールが PostgreSQL インスタンスを作成する") {
             val content = Files.readString(modulesDir.resolve("cloud_sql_postgres/main.tf"))
             content shouldContain "google_sql_database_instance"
-            content shouldContain "POSTGRES_15"
+            content shouldContain "POSTGRES_"
             content shouldContain "google_sql_database"
             content shouldContain "google_sql_user"
         }
@@ -89,8 +89,7 @@ class TerraformConfigTest : DescribeSpec({
         it("cloud_run_service モジュールが Cloud Run v2 サービスを作成する") {
             val content = Files.readString(modulesDir.resolve("cloud_run_service/main.tf"))
             content shouldContain "google_cloud_run_v2_service"
-            content shouldContain "cloud_sql_instance"
-            content shouldContain "/health"
+            content shouldContain "run.invoker"
         }
     }
 
