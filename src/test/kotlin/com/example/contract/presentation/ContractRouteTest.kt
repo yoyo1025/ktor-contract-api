@@ -197,4 +197,36 @@ class ContractRouteTest : DescribeSpec({
             }
         }
     }
+
+    describe("不正リクエストのエラーハンドリング") {
+        it("不正なJSONは400を返す") {
+            testApplication {
+                application { contractTestModule(contractUseCase) }
+                val client = createClient { install(ContentNegotiation) { json() } }
+                val response =
+                    client.post("/api/v1/contracts") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{ invalid json """)
+                    }
+                response.status shouldBe HttpStatusCode.BadRequest
+                val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                body["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content shouldBe "VALIDATION_ERROR"
+            }
+        }
+
+        it("必須フィールド欠落は400を返す") {
+            testApplication {
+                application { contractTestModule(contractUseCase) }
+                val client = createClient { install(ContentNegotiation) { json() } }
+                val response =
+                    client.post("/api/v1/contracts") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{"title":"テスト"}""")
+                    }
+                response.status shouldBe HttpStatusCode.BadRequest
+                val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                body["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content shouldBe "VALIDATION_ERROR"
+            }
+        }
+    }
 })

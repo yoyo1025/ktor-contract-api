@@ -78,5 +78,20 @@ class AuthRouteTest : DescribeSpec({
                 body["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content shouldBe "UNAUTHORIZED"
             }
         }
+
+        it("不正なJSONは400を返す") {
+            testApplication {
+                application { authTestModule(loginUseCase) }
+                val client = createClient { install(ContentNegotiation) { json() } }
+                val response =
+                    client.post("/api/v1/auth/login") {
+                        contentType(ContentType.Application.Json)
+                        setBody("""{ not valid json""")
+                    }
+                response.status shouldBe HttpStatusCode.BadRequest
+                val body = Json.parseToJsonElement(response.bodyAsText()).jsonObject
+                body["error"]?.jsonObject?.get("code")?.jsonPrimitive?.content shouldBe "VALIDATION_ERROR"
+            }
+        }
     }
 })
