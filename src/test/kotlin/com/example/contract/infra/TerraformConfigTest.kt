@@ -93,6 +93,32 @@ class TerraformConfigTest : DescribeSpec({
         }
     }
 
+    describe("GitHub Actions CD 用リソース") {
+        val mainTf = Files.readString(terraformDir.resolve("main.tf"))
+
+        it("デプロイ用サービスアカウントを作成する") {
+            mainTf shouldContain "github-actions-deploy"
+            mainTf shouldContain "roles/run.admin"
+            mainTf shouldContain "roles/artifactregistry.writer"
+            mainTf shouldContain "roles/iam.serviceAccountUser"
+        }
+
+        it("Workload Identity Pool と Provider を作成する") {
+            mainTf shouldContain "google_iam_workload_identity_pool"
+            mainTf shouldContain "google_iam_workload_identity_pool_provider"
+            mainTf shouldContain "token.actions.githubusercontent.com"
+        }
+
+        it("Workload Identity Federation の SA バインディングがある") {
+            mainTf shouldContain "roles/iam.workloadIdentityUser"
+        }
+
+        it("IAM API を有効化する") {
+            mainTf shouldContain "iam.googleapis.com"
+            mainTf shouldContain "iamcredentials.googleapis.com"
+        }
+    }
+
     describe("CI ワークフローに Terraform 検証が含まれる") {
         val ciWorkflow = Files.readString(Path.of(".github", "workflows", "ci.yml"))
 
